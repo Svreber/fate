@@ -50,7 +50,7 @@ func main() {
 }
 
 func health(c echo.Context) error {
-	return c.String(http.StatusOK, "Toto")
+	return c.String(http.StatusOK, "OK")
 }
 
 func roll(c echo.Context) error {
