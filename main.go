@@ -10,7 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -20,6 +22,13 @@ func main() {
 	// -- Basic echo --
 
 	e := echo.New()
+
+	// -- Instrument echo --
+
+	e.Use(middleware.Logger())
+
+	p := prometheus.NewPrometheus("fate", nil)
+	p.Use(e)
 
 	// -- Add endpoints
 
