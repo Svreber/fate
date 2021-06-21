@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo-contrib/prometheus"
@@ -64,9 +65,34 @@ func roll(c echo.Context) error {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	i := rollDice(faces)
+	dicesStr := c.QueryParam("dices")
 
-	return c.String(http.StatusOK, fmt.Sprint(i))
+	if len(dicesStr) < 2 {
+		// Only one dice to roll
+		return c.String(http.StatusOK, fmt.Sprint(rollDice(faces)))
+	}
+
+	// Roll all the dices concurrently
+
+	dices, err := strconv.Atoi(dicesStr)
+	if err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	ch := make(chan int, dices)
+
+	for i := 0; i < dices; i++ {
+		go func() {
+			ch <- rollDice(faces)
+		}()
+	}
+
+	res := []string{}
+	for i := 0; i < dices; i++ {
+		res = append(res, fmt.Sprint(<-ch))
+	}
+
+	return c.String(http.StatusOK, strings.Join(res, ","))
 }
 
 func rollDice(faces int) int {
