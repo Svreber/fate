@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRoll(t *testing.T) {
@@ -100,4 +103,44 @@ func TestMagicBall(t *testing.T) {
 
 		assert.Contains(t, magicBallAnswers, string(payload))
 	}
+}
+
+func TestCustom(t *testing.T) {
+	e := echo.New()
+
+	list := []string{"a", "b", "c"}
+	input := payload{
+		Outcomes: list,
+	}
+
+	for i := 0; i < 10000; i++ {
+		body, err := json.Marshal(input)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/custom", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		rec := httptest.NewRecorder()
+		ctx := e.NewContext(req, rec)
+
+		assert.NoError(t, custom(ctx))
+
+		payload, err := io.ReadAll(rec.Result().Body)
+		assert.NoError(t, err)
+
+		assert.Contains(t, list, string(payload))
+	}
+}
+
+func TestRandomElement(t *testing.T) {
+	input := []string{"a", "b", "c"}
+
+	for i := 0; i < 10000; i++ {
+		assert.Contains(t, input, randomElement(input))
+	}
+}
+
+func TestRandomElementTrivialInput(t *testing.T) {
+	assert.Equal(t, "", randomElement([]string{}))
+	assert.Equal(t, "", randomElement(nil))
 }

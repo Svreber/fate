@@ -39,6 +39,7 @@ func main() {
 	e.GET("/roll", roll)
 	e.GET("/flip", flip)
 	e.GET("/magic-ball", magicBall)
+	e.POST("/custom", custom)
 
 	// -- Start the server --
 
@@ -136,7 +137,27 @@ var magicBallAnswers = []string{
 }
 
 func magicBall(c echo.Context) error {
-	k := rand.Intn(len(magicBallAnswers))
+	return c.String(http.StatusOK, randomElement(magicBallAnswers))
+}
 
-	return c.String(http.StatusOK, magicBallAnswers[k])
+type payload struct {
+	Outcomes []string `json:"outcomes"`
+}
+
+func custom(c echo.Context) error {
+	var p payload
+	if err := c.Bind(&p); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return c.String(http.StatusOK, randomElement(p.Outcomes))
+}
+
+func randomElement(s []string) string {
+	if len(s) == 0 {
+		return ""
+	}
+
+	k := rand.Intn(len(s))
+	return s[k]
 }
